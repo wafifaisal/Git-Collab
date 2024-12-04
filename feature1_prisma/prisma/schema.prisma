@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum EventCategory {
+  Concert
+  Sports
+  Theater
+  Socials
+  Other
+}
+
+model Event {
+  id              Int           @id @default(autoincrement())
+  event_name      String        @unique
+  slug            String        @unique
+  start_date      DateTime
+  end_date        DateTime
+  free_event      Boolean
+  rating          Int
+  event_thumbnail String
+  event_preview   String
+  Venue           Venue[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  category        EventCategory
+  Description     Description[]
+  Rating          Rating[]
+}
+
+model Venue {
+  id         Int    @id @default(autoincrement())
+  venue_city String
+  venue_name String
+  Event      Event? @relation(fields: [eventId], references: [id])
+  eventId    Int?
+}
+
+model Description {
+  id                Int    @id @default(autoincrement())
+  description_title String
+  description       Json
+  Event             Event? @relation(fields: [eventId], references: [id])
+  eventId           Int?
+}
+
+model Rating {
+  id      Int    @id @default(autoincrement())
+  rating  Int
+  comment String
+  Event   Event? @relation(fields: [eventId], references: [id])
+  eventId Int?
+}
