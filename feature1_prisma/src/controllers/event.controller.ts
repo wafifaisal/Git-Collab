@@ -1,22 +1,37 @@
 import { Request, Response } from "express";
 import prisma from "../prisma";
 
-export const searchEvents = async (req: Request, res: Response) => {
-  const { query, filter } = req.query;
-
-  try {
-    const results = await prisma.event.findMany({
-      where: {
-        [filter as string]: {
-          contains: query as string,
-          mode: "insensitive",
+export class EventController {
+  async getEvent(req: Request, res: Response) {
+    try {
+      const events = await prisma.event.findMany({
+        select: {
+          id: true,
+          category: true,
+          event_name: true,
+          event_thumbnail: true,
+          event_preview: true,
+          slug: true,
+          date: true,
+          Ticket: {
+            select: {
+              price: true,
+            },
+          },
+          Organizer: {
+            select: {
+              name: true,
+              avatar: true,
+            },
+          },
         },
-      },
-    });
-
-    res.status(200).json(results);
-  } catch (error) {
-    console.error("Error fetching events:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+      });
+      console.log("Fetched events:", events);
+      res.status(200).send({ events });
+    } catch (err) {
+      console.log(err);
+      res.status(400).send(err);
+    }
   }
-};
+  async getEventSlug(req: Request, res: Response) {}
+}

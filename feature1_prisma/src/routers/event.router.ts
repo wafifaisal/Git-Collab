@@ -1,8 +1,20 @@
-import express from "express";
-import { searchEvents } from "../controllers/event.controller";
+import { Router } from "express";
+import { EventController } from "../controllers/event.controller";
 
-const router = express.Router();
+export class EventRouter {
+  private eventController: EventController;
+  private router: Router;
 
-router.get("/search", searchEvents);
+  constructor() {
+    this.eventController = new EventController();
+    this.router = Router();
+    this.initializeRoutes();
+  }
+  private initializeRoutes() {
+    this.router.get("/", this.eventController.getEvent);
+  }
 
-export default router;
+  getRouter(): Router {
+    return this.router;
+  }
+}

@@ -8,6 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+//-----------------EVENT----------------------
 enum EventCategory {
   Concert
   Sports
@@ -16,44 +17,137 @@ enum EventCategory {
   Other
 }
 
+enum Location {
+  Bandung
+  Jakarta
+  Bali
+  Surabaya
+}
+
+enum EventType {
+  Paid
+  Free
+}
+
 model Event {
   id              Int           @id @default(autoincrement())
-  event_name      String        @unique
-  slug            String        @unique
-  start_date      DateTime
-  end_date        DateTime
-  free_event      Boolean
-  rating          Int
-  event_thumbnail String
-  event_preview   String
-  Venue           Venue[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  event_name      String?       @unique
+  description     String?
+  slug            String?       @unique
+  date            DateTime?     @default(now()) @db.Date
+  time            DateTime?     @default(now()) @db.Time(6)
+  location        Location
+  event_type      EventType
+  event_thumbnail String?
+  event_preview   String?
+  createdAt       DateTime?     @default(now())
+  updatedAt       DateTime?     @updatedAt
   category        EventCategory
-  Description     Description[]
-  Rating          Rating[]
+  Organizer       Organizer[]
+  Ticket          Ticket?       @relation(fields: [ticketId], references: [id])
+  ticketId        Int?
+  Rating          Rating?       @relation(fields: [ratingId], references: [id])
+  ratingId        Int?
+  Order           Order?        @relation(fields: [orderId], references: [id])
+  orderId         Int?
 }
 
-model Venue {
-  id         Int    @id @default(autoincrement())
-  venue_city String
-  venue_name String
-  Event      Event? @relation(fields: [eventId], references: [id])
-  eventId    Int?
+model Ticket {
+  id              Int            @id @default(autoincrement())
+  category        String?
+  desc            String?
+  seats           Int?
+  price           BigInt?
+  EventId         Event[]
+  Order_Details   Order_Details? @relation(fields: [order_DetailsId], references: [id])
+  order_DetailsId Int?
 }
 
-model Description {
-  id                Int    @id @default(autoincrement())
-  description_title String
-  description       Json
-  Event             Event? @relation(fields: [eventId], references: [id])
-  eventId           Int?
+model Organizer {
+  id       String  @id @default(uuid())
+  name     String? @unique
+  email    String? @unique
+  password String?
+  avatar   String?
+  isVerify Boolean @default(false)
+  Event    Event?  @relation(fields: [eventId], references: [id])
+  eventId  Int?
 }
 
 model Rating {
-  id      Int    @id @default(autoincrement())
+  id      Int     @id @default(autoincrement())
   rating  Int
   comment String
-  Event   Event? @relation(fields: [eventId], references: [id])
-  eventId Int?
+  UserId  User[]
+  EventId Event[]
+}
+
+//------------USER-----------------------
+
+enum Role {
+  User
+  Organizer
+}
+
+enum Status {
+  Pending
+  Paid
+  Cancelled
+}
+
+model User {
+  id           String      @id @default(uuid())
+  first_name   String
+  last_name    String
+  email        String      @unique
+  password     String
+  avatar       String?
+  isVerify     Boolean     @default(false)
+  ref_code     String
+  role         Role
+  Rating       Rating?     @relation(fields: [ratingId], references: [id])
+  ratingId     Int?
+  UserCoupon   UserCoupon? @relation(fields: [userCouponId], references: [id])
+  userCouponId Int?
+  UserPoint    UserPoint?  @relation(fields: [userPointId], references: [id])
+  userPointId  Int?
+  Order        Order?      @relation(fields: [orderId], references: [id])
+  orderId      Int?
+}
+
+model UserCoupon {
+  id         Int      @id @default(autoincrement())
+  isRedeem   Boolean  @default(false)
+  percentage Int      @default(10)
+  createdAt  DateTime @default(now())
+  expiredAt  DateTime
+  UserId     User[]
+}
+
+model UserPoint {
+  id        Int      @id @default(autoincrement())
+  isRedeem  Boolean  @default(false)
+  point     Int
+  createdAt DateTime @default(now())
+  expiredAt DateTime
+  UserId    User[]
+}
+
+model Order {
+  id              Int            @id @default(autoincrement())
+  total_price     BigInt
+  final_price     BigInt
+  status          Status         @default(Pending)
+  payment_proof   String
+  UserId          User[]
+  EventId         Event[]
+  Order_Details   Order_Details? @relation(fields: [order_DetailsId], references: [id])
+  order_DetailsId Int?
+}
+
+model Order_Details {
+  id       Int      @id @default(autoincrement())
+  quantity Int
+  OrderId  Order[]
+  TicketId Ticket[]
 }
